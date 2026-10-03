@@ -1,0 +1,19 @@
+[build-system]
+requires = ["setuptools>=64"]
+build-backend = "setuptools.build_meta"
+
+[project]
+name = "turkce-uslup"
+version = "0.1.0"
+description = "Türkçe metnin üslubu (haber, bilgi, talimat/duyuru, deneme, anlatı, masal, sohbet) ve seslendirme okuma ayarı; yalnız numpy"
+readme = "README.md"
+license = { text = "MIT (kod); CC BY-SA 4.0 (model: UD Turkish-BOUN ve Vikipedi türevi)" }
+authors = [{ name = "Mehmet Veysel Delibaş" }]
+requires-python = ">=3.9"
+dependencies = ["numpy"]
+
+[project.optional-dependencies]
+egitim = ["scikit-learn", "pyarrow", "huggingface_hub"]
+
+[tool.setuptools.packages.find]
+include = ["turkce_uslup*"]

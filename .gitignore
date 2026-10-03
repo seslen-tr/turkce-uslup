@@ -1,0 +1,6 @@
+__pycache__/
+*.pyc
+/veri/
+/model/
+*.log
+*.err

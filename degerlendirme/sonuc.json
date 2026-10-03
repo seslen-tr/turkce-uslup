@@ -1,0 +1,14 @@
+{
+ "cumle_dogruluk": 0.5249,
+ "metin_3_cumle": 0.7117,
+ "metin_5_cumle": 0.77,
+ "metin_10_cumle": 0.9058,
+ "kaynak_boun-bio": 0.229,
+ "kaynak_boun-ess": 0.3878,
+ "kaynak_boun-ins": 0.4124,
+ "kaynak_boun-news": 0.5106,
+ "kaynak_boun-pop": 0.5519,
+ "kaynak_commonvoice": 0.6512,
+ "kaynak_vikipedi": 0.8857,
+ "kaynak_xed": 0.6179
+}

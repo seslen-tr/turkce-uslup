@@ -1,0 +1,6 @@
+numpy
+
+[egitim]
+scikit-learn
+pyarrow
+huggingface_hub

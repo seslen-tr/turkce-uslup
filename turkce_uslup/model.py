@@ -1,0 +1,87 @@
+# -*- coding: utf-8 -*-
+"""
+ÜSLUP MODELİ — TF-IDF (karakter 2-5 gram + sözcük + noktalama) + çok sınıflı lojistik regresyon.
+Çalışma anı yalnız numpy: model/uslup.npz (sözlük, idf, ağırlık). Özellik çıkarımı eğitimle aynı
+fonksiyondur (ozellikler), sapma olmaz.
+"""
+from __future__ import annotations
+
+import math
+import os
+import re
+import unicodedata
+from collections import Counter
+from functools import lru_cache
+from pathlib import Path
+
+import numpy as np
+
+_PAKET = Path(__file__).resolve().parent
+
+
+def kucuk(s: str) -> str:
+    return unicodedata.normalize("NFC", s.replace("I", "ı").replace("İ", "i")).lower()
+
+
+def ozellikler(metin: str) -> list[str]:
+    """Karakter 2-5 gramları (sözcük sınırlı), sözcükler, noktalama ve biçim ipuçları."""
+    k = kucuk(metin)
+    out = []
+    for w in re.findall(r"[a-zçğıöşüâîû]+", k):
+        p = f" {w} "
+        out += [p[i:i + n] for n in range(2, 6) for i in range(len(p) - n + 1)]
+        out.append("S:" + w)
+    out += ["N:" + c for c in re.findall(r"[?!…:;\"“”'()\-–—%]", metin)]
+    if re.search(r"\d", metin):
+        out.append("B:rakam")
+    if metin[:1].isupper():
+        out.append("B:buyuk_bas")
+    n = len(metin.split())
+    out.append("B:uzunluk_" + ("kisa" if n <= 6 else "orta" if n <= 15 else "uzun"))
+    return out
+
+
+def _klasor(klasor: str | Path | None) -> Path:
+    for a in ([Path(klasor)] if klasor else []) + ([Path(os.environ["TURKCE_USLUP_MODEL"])]
+                                                  if os.environ.get("TURKCE_USLUP_MODEL") else []) \
+            + [_PAKET / "model", _PAKET.parent / "model"]:
+        if (a / "uslup.npz").exists():
+            return a
+    raise FileNotFoundError("üslup modeli (uslup.npz) bulunamadı; TURKCE_USLUP_MODEL ile klasörü gösterin")
+
+
+class UslupModeli:
+    def __init__(self, klasor: str | Path | None = None):
+        v = np.load(_klasor(klasor) / "uslup.npz", allow_pickle=False)
+        self.usluplar: list[str] = [str(x) for x in v["usluplar"]]
+        self.sozluk = {str(s): i for i, s in enumerate(v["sozluk"])}
+        self.idf, self.w, self.b = v["idf"], v["agirlik"], v["sapma"]
+
+    def logit(self, cumleler: list[str]) -> np.ndarray:
+        out = np.zeros((len(cumleler), len(self.usluplar)), dtype=np.float32)
+        for r, c in enumerate(cumleler):
+            say = Counter(i for i in (self.sozluk.get(f) for f in ozellikler(c)) if i is not None)
+            if not say:
+                out[r] = self.b
+                continue
+            idx = np.fromiter(say.keys(), dtype=np.int64)
+            deg = np.array([1 + math.log(n) for n in say.values()], dtype=np.float32) * self.idf[idx]
+            deg /= np.linalg.norm(deg) or 1.0
+            out[r] = self.w[:, idx] @ deg + self.b
+        return out
+
+    def olasiliklar(self, cumleler: list[str]) -> np.ndarray:
+        z = self.logit(cumleler)
+        z = np.exp(z - z.max(1, keepdims=True))
+        return z / z.sum(1, keepdims=True)
+
+    def metin_olasiligi(self, cumleler: list[str]) -> np.ndarray:
+        """Metnin üslubu: cümlelerin log-olasılık ortalaması (üslup metnin özelliğidir, tek cümle gürültülü)."""
+        lp = np.log(self.olasiliklar(cumleler) + 1e-9).mean(0)
+        z = np.exp(lp - lp.max())
+        return z / z.sum()
+
+
+@lru_cache(maxsize=1)
+def varsayilan() -> UslupModeli:
+    return UslupModeli()
