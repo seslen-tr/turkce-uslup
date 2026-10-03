@@ -4,3 +4,4 @@ __pycache__/
 /model/
 *.log
 *.err
+*.egg-info/
