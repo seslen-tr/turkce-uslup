@@ -1,0 +1,45 @@
+{
+ "dogrulama": 0.6831,
+ "tfidf": {
+  "cumle": 0.5249,
+  "metin_3": 0.7117,
+  "metin_5": 0.77,
+  "metin_10": 0.9058,
+  "kaynak_boun-bio": 0.229,
+  "kaynak_boun-ess": 0.3878,
+  "kaynak_boun-ins": 0.4124,
+  "kaynak_boun-news": 0.5106,
+  "kaynak_boun-pop": 0.5519,
+  "kaynak_commonvoice": 0.6512,
+  "kaynak_vikipedi": 0.8857,
+  "kaynak_xed": 0.6179
+ },
+ "bert": {
+  "cumle": 0.6845,
+  "metin_3": 0.8992,
+  "metin_5": 0.9608,
+  "metin_10": 0.9967,
+  "kaynak_boun-bio": 0.3692,
+  "kaynak_boun-ess": 0.4966,
+  "kaynak_boun-ins": 0.6495,
+  "kaynak_boun-news": 0.766,
+  "kaynak_boun-pop": 0.5844,
+  "kaynak_commonvoice": 0.8372,
+  "kaynak_vikipedi": 0.9905,
+  "kaynak_xed": 0.7641
+ },
+ "birlesim": {
+  "cumle": 0.6864,
+  "metin_3": 0.905,
+  "metin_5": 0.9633,
+  "metin_10": 0.9967,
+  "kaynak_boun-bio": 0.3505,
+  "kaynak_boun-ess": 0.517,
+  "kaynak_boun-ins": 0.6289,
+  "kaynak_boun-news": 0.7553,
+  "kaynak_boun-pop": 0.6104,
+  "kaynak_commonvoice": 0.8372,
+  "kaynak_vikipedi": 0.981,
+  "kaynak_xed": 0.7874
+ }
+}

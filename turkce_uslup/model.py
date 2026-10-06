@@ -1,8 +1,11 @@
 # -*- coding: utf-8 -*-
 """
-ÜSLUP MODELİ — TF-IDF (karakter 2-5 gram + sözcük + noktalama) + çok sınıflı lojistik regresyon.
-Çalışma anı yalnız numpy: model/uslup.npz (sözlük, idf, ağırlık). Özellik çıkarımı eğitimle aynı
-fonksiyondur (ozellikler), sapma olmaz.
+ÜSLUP MODELLERİ
+  BertUslupModeli  BERTurk ince ayarı, ONNX (model/bert_onnx; egit/egit_bert.py + egit/aktar_bert.py).
+                   Sınavda tek cümle %68,5, 5 cümlelik metin %96,1. Gerekenler: onnxruntime, tokenizers.
+  UslupModeli      TF-IDF (karakter 2-5 gram + sözcük + noktalama) + lojistik regresyon; yalnız numpy
+                   (model/uslup.npz). Tek cümle %52,5, 5 cümle %77,0. Hafif yedek.
+varsayilan(): BERTurk varsa o, yoksa TF-IDF. TURKCE_USLUP_MOTOR=tfidf ile TF-IDF'e zorlanır.
 """
 from __future__ import annotations
 
@@ -82,6 +85,50 @@ class UslupModeli:
         return z / z.sum()
 
 
+class BertUslupModeli:
+    def __init__(self, klasor: str | Path | None = None, is_parcacigi: int = 0):
+        import json
+
+        import onnxruntime as ort
+        from tokenizers import Tokenizer
+        k = _bert_klasor(klasor)
+        ayar = json.loads((k / "etiketler.json").read_text(encoding="utf-8"))
+        self.usluplar: list[str] = ayar["usluplar"]
+        self.tok = Tokenizer.from_file(str(k / "tokenizer.json"))
+        self.tok.enable_truncation(int(ayar.get("uzunluk", 96)))
+        self.tok.enable_padding(pad_id=self.tok.token_to_id("[PAD]") or 0)
+        se = ort.SessionOptions()
+        if is_parcacigi:
+            se.intra_op_num_threads = is_parcacigi
+        self.oturum = ort.InferenceSession(str(k / "uslup.onnx"), se, providers=["CPUExecutionProvider"])
+
+    def olasiliklar(self, cumleler: list[str]) -> np.ndarray:
+        if not cumleler:
+            return np.zeros((0, len(self.usluplar)), dtype=np.float32)
+        kod = self.tok.encode_batch(cumleler)
+        g = {"input_ids": np.array([e.ids for e in kod], dtype=np.int64),
+             "attention_mask": np.array([e.attention_mask for e in kod], dtype=np.int64),
+             "token_type_ids": np.array([e.type_ids for e in kod], dtype=np.int64)}
+        z = self.oturum.run(None, g)[0]
+        z = np.exp(z - z.max(1, keepdims=True))
+        return z / z.sum(1, keepdims=True)
+
+    metin_olasiligi = UslupModeli.metin_olasiligi
+
+
+def _bert_klasor(klasor: str | Path | None) -> Path:
+    for a in ([Path(klasor)] if klasor else []) + ([Path(os.environ["TURKCE_USLUP_BERT"])]
+                                                  if os.environ.get("TURKCE_USLUP_BERT") else [])             + [_PAKET / "model" / "bert_onnx", _PAKET.parent / "model" / "bert_onnx"]:
+        if (a / "uslup.onnx").exists():
+            return a
+    raise FileNotFoundError("BERTurk üslup modeli (bert_onnx/uslup.onnx) bulunamadı")
+
+
 @lru_cache(maxsize=1)
-def varsayilan() -> UslupModeli:
+def varsayilan() -> "BertUslupModeli | UslupModeli":
+    if os.environ.get("TURKCE_USLUP_MOTOR", "").lower() != "tfidf":
+        try:
+            return BertUslupModeli()
+        except (FileNotFoundError, ImportError):
+            pass
     return UslupModeli()

@@ -19,3 +19,16 @@ def test_model_metin():
     metin = ("Hey, nereye gidiyorsun öyle? Dur bir dakika, ben de geliyorum. Tamam, acele etme. "
              "Hadi ama, geç kalacağız. Peki peki, geliyorum işte.")
     assert uslup(metin).uslup == "sohbet"
+
+
+def test_yonerge_dizisi():                         # G&K §21.4.4.2: yönergeler kibar emir kipiyle
+    assert uslup("Tencereye iki su bardağı su ekleyin. Kısık ateşte pişirin.").uslup == "talimat"
+    assert uslup("Ardından karışımı fırına verin.").uslup == "talimat"           # sıra sözü + emir
+    assert uslup("Formu doldurun. Ardından imzalayıp teslim edin.").uslup == "talimat"
+
+
+def test_kisi_eki_emir_degil():                    # -sInIz, -DIn: emir ekine benzer ama kişi ekidir
+    from turkce_uslup.kurallar import kural_uslubu
+    assert kural_uslubu("Bazılarınız beni kandırdığınızı sanıyorsunuz. Ama yanılıyorsunuz.") is None
+    assert kural_uslubu("Dün akşam ne yaptınız? Sinemaya gittiniz. Eve döndünüz.") is None
+    assert kural_uslubu("Bekleyin! Ben size göstereceğim.") is None             # konuşmadaki buyruk

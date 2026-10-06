@@ -45,10 +45,22 @@ Kulakla ayarlanır ve her biri `okuma_ayari(..., alan=değer)` ile değiştirile
 
 1. **Kurallar.** Masal tekerlemeleri: "bir varmış bir yokmuş" (TDK, "bir masala başlarken … söylenen bir
    tekerleme"), "evvel zaman içinde", "kalbur saman içinde", "onlar ermiş muradına". Duyuru kalıpları:
-   "sayın yolcularımız", "değerli müşterilerimiz", "dikkatinize sunarız".
-2. **Model.** TF-IDF özellikleri (karakter 2-5 gram, sözcük, noktalama) ve çok sınıflı lojistik regresyon.
-   Metnin üslubu, cümlelerin log-olasılıklarının ortalamasıdır. Çalışma anında yalnız numpy kullanılır.
-   sklearn çıktısıyla birebir aynıdır (doğrulamada %100 aynı tahmin, en büyük olasılık farkı 4·10⁻⁷).
+   "sayın yolcularımız", "değerli müşterilerimiz", "dikkatinize sunarız". Yönerge dizileri: tarif,
+   kılavuz ve yönergeler kibar emir kipiyle yazılır (-(y)In, -(y)InIz; Göksel & Kerslake §21.4.4.2).
+   En az iki cümle bu kiple bitiyorsa ya da bir cümle sıra sözüyle ("önce", "ardından", "son olarak")
+   başlayıp bu kiple bitiyorsa talimat sayılır. Kişi ekleri (yanılıyor-sunuz, yap-tınız) ve konuşmadaki
+   ünlemli buyruklar ("Bekleyin!") hariç tutulur. Bu kural doğrulama ve sınav kümelerinde doğruluğu
+   değiştirmedi; modelin talimatta zayıf kaldığı gerçek yönergeleri yakalar.
+2. **Model.** İki model var; `varsayilan()` BERTurk varsa onu, yoksa TF-IDF'i kullanır
+   (`TURKCE_USLUP_MOTOR=tfidf` ile TF-IDF'e zorlanır). Metnin üslubu, cümlelerin log-olasılıklarının
+   ortalamasıdır.
+   - **BERTurk** ([dbmdz/bert-base-turkish-cased](https://huggingface.co/dbmdz/bert-base-turkish-cased))
+     ince ayarı, ONNX olarak (`model/bert_onnx`, 443 MB, cümle başına ~10–25 ms). ONNX ↔ PyTorch en büyük
+     olasılık farkı 5·10⁻⁶. int8 sıkıştırma doğrulamada 0,5 puan kaybettirdiği için fp32. Gerekenler:
+     onnxruntime, tokenizers.
+   - **TF-IDF** (karakter 2-5 gram, sözcük, noktalama) + çok sınıflı lojistik regresyon (`model/uslup.npz`).
+     Çalışma anında yalnız numpy; sklearn çıktısıyla birebir aynı (en büyük olasılık farkı 4·10⁻⁷).
+     Hafif yedek.
 
 | Üslup | Eğitim verisi | Lisans |
 |---|---|---|
@@ -61,18 +73,23 @@ Kulakla ayarlanır ve her biri `okuma_ayari(..., alan=değer)` ile değiştirile
 
 Sınav kümesinde ölçüldü (1.604 cümle; eğitimde ve ayar seçiminde kullanılmadı).
 
-| Ölçü | Doğruluk |
-|---|---|
-| Tek cümle (6 üslup, şans %17) | %52,5 |
-| Metin, 3 cümle | %71,2 |
-| Metin, 5 cümle | %77,0 |
-| Metin, 10 cümle | **%90,6** |
+| Ölçü | BERTurk | TF-IDF |
+|---|---|---|
+| Tek cümle (6 üslup, şans %17) | **%68,5** | %52,5 |
+| Metin, 3 cümle | **%89,9** | %71,2 |
+| Metin, 5 cümle | **%96,1** | %77,0 |
+| Metin, 10 cümle | **%99,7** | %90,6 |
+
+İkisinin birleşimi (log-olasılık ortalaması) BERTurk'ten anlamlı ölçüde iyi değil (tek cümle %68,6).
+Kaynak kaynak sonuçlar `degerlendirme/bert_sonuc.json` dosyasında.
 
 "Metin": aynı üsluptan rastgele seçilen k cümle. Veride gerçek paragraf yoktur.
 
 **Sınırlar:**
-- **Kaynak etkisi.** "bilgi" üslubunda Vikipedi cümleleri %89 doğru bulunur, BOUN biyografileri yalnız %23.
-  Model türün yanında kaynağın yazım tarzını da öğreniyor.
+- **Kaynak etkisi.** "bilgi" üslubunda Vikipedi cümleleri %99 (TF-IDF %89) doğru bulunur, BOUN
+  biyografileri yalnız %37 (TF-IDF %23). Model türün yanında kaynağın yazım tarzını da öğreniyor.
+- **Talimat verisi tek kaynaklı.** Eğitimdeki talimat cümleleri BOUN'un "ins" türünden; gündelik tarif ve
+  kullanım yönergelerini model çoğu zaman "deneme" sanıyor. Bu yüzden kural eklendi (yukarıda).
 - **Benzer türler karışır.** Gazete haberi, deneme ve biyografi birbirine benzer yazı dilleridir.
 - **Tek cümle güvenilir değildir.** Kısa metinlerde stüdyoda elle seçim önerilir.
 - **Kurallar yalnız açık kalıpları tanır.** Tekerlemesiz bir masal model tarafından "anlatı" olarak
@@ -83,14 +100,16 @@ Sınav kümesinde ölçüldü (1.604 cümle; eğitimde ve ayar seçiminde kullan
 ```
 pip install turkce-uslup[egitim]
 python egit/veri.py         # kaynaklar sabit sürümlerden; MD5'e göre bölme
-python egit/egit.py         # birkaç dakika, işlemcide
+python egit/egit.py         # TF-IDF: birkaç dakika, işlemcide
 python degerlendirme/olc.py
+python egit/egit_bert.py    # BERTurk: GPU'da birkaç dakika (RTX 3050'de ~6 dk), işlemcide saatler
+python egit/aktar_bert.py   # ONNX + eşdeğerlik kapısı → model/bert_onnx
 ```
 
 ## Lisans
 
-Kod MIT ([LICENSE](LICENSE)). Model (`model/uslup.npz`) UD Turkish-BOUN ve Vikipedi türevi olduğu için
-**CC BY-SA 4.0**; XED (CC BY 4.0) ve Common Voice (CC0) atıfları yukarıda.
+Kod MIT ([LICENSE](LICENSE)). Modeller (`model/uslup.npz`, `model/bert_onnx`) UD Turkish-BOUN ve Vikipedi
+türevi olduğu için **CC BY-SA 4.0**; BERTurk başlangıç modeli MIT; XED (CC BY 4.0) ve Common Voice (CC0) atıfları yukarıda.
 
 Kardeş projeler: [turkce-duygu](../turkce-duygu), [turkce-vurgu](../turkce-vurgu),
 [turkce-normalize](../turkce-normalize), [turkce-plbert](../turkce-plbert), [turkce-tts-sinav](../turkce-tts-sinav).
