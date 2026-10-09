@@ -1,5 +1,7 @@
 # turkce-uslup
 
+> **English:** Detects the genre of a Turkish text (news, informative, instructions/announcement, essay, narrative, fairy tale, conversation) and suggests reading settings for TTS: speed, pitch range, pause between sentences and after commas. Ships with a 1.3 MB TF-IDF model (numpy only, works offline); an optional fine-tuned BERTurk model is downloaded from Hugging Face.
+
 Türkçe metnin **üslubunu** bulur ve seslendirme için **okuma ayarı** önerir: hız, tonlama genişliği,
 cümle arası duraklama, virgül duraklaması. Bağımlılığı yalnız numpy, model 1,3 MB, yanıtı anlıktır.
 
