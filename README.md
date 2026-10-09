@@ -20,7 +20,7 @@ okuma_ayari("haber", hiz=1.2)     # stüdyoda değiştirilen ayar: üslubun geri
 Aynı nötr cümle üsluba göre başka okunur. Haber tempolu ve düz okunur. Masal yavaş, hareketli ve
 duraklamalı okunur. Sohbet rahat ve hızlı akar. Duygu (neşeli, üzgün…) cümlenin tonudur; üslup ise
 metnin bütününün türüdür. İkisi birbirinden ayrı ayarlanmalıdır. Duygu için kardeş proje
-[turkce-duygu](../turkce-duygu)'ya bakın.
+[turkce-duygu](https://github.com/seslen-tr/turkce-duygu)'ya bakın.
 
 ## Üsluplar ve okuma ayarları
 
@@ -113,5 +113,5 @@ python egit/aktar_bert.py   # ONNX + eşdeğerlik kapısı → model/bert_onnx
 Kod MIT ([LICENSE](LICENSE)). Modeller (`model/uslup.npz`, `model/bert_onnx`) UD Turkish-BOUN ve Vikipedi
 türevi olduğu için **CC BY-SA 4.0**; BERTurk başlangıç modeli MIT; XED (CC BY 4.0) ve Common Voice (CC0) atıfları yukarıda.
 
-Kardeş projeler: [turkce-duygu](../turkce-duygu), [turkce-vurgu](../turkce-vurgu),
-[turkce-normalize](../turkce-normalize), [turkce-plbert](../turkce-plbert), [turkce-tts-sinav](../turkce-tts-sinav).
+Kardeş projeler: [turkce-duygu](https://github.com/seslen-tr/turkce-duygu), [turkce-vurgu](https://github.com/seslen-tr/turkce-vurgu),
+[turkce-normalize](https://github.com/seslen-tr/turkce-normalize), [turkce-plbert](https://github.com/seslen-tr/turkce-plbert), [turkce-tts-sinav](https://github.com/seslen-tr/turkce-tts-sinav).

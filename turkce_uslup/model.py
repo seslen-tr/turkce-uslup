@@ -23,7 +23,7 @@ from pathlib import Path
 import numpy as np
 
 _PAKET = Path(__file__).resolve().parent
-HF_DEPO = os.environ.get("TURKCE_USLUP_HF", "mveyseldelibas/turkce-uslup")
+HF_DEPO = os.environ.get("TURKCE_USLUP_HF", "seslen-tr/turkce-uslup")
 
 
 def _hf_indir() -> Path | None:
