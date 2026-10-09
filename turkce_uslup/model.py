@@ -6,6 +6,9 @@
   UslupModeli      TF-IDF (karakter 2-5 gram + sözcük + noktalama) + lojistik regresyon; yalnız numpy
                    (model/uslup.npz). Tek cümle %52,5, 5 cümle %77,0. Hafif yedek.
 varsayilan(): BERTurk varsa o, yoksa TF-IDF. TURKCE_USLUP_MOTOR=tfidf ile TF-IDF'e zorlanır.
+TF-IDF modeli pakette gelir (turkce_uslup/model/uslup.npz). BERTurk yerelde yoksa Hugging Face'ten iner
+(TURKCE_USLUP_HF deposu, ilk kullanımda; TURKCE_USLUP_INDIRME=0 ya da HF_HUB_OFFLINE=1 ile kapalı):
+pip install "turkce-uslup[bert]".
 """
 from __future__ import annotations
 
@@ -20,6 +23,18 @@ from pathlib import Path
 import numpy as np
 
 _PAKET = Path(__file__).resolve().parent
+HF_DEPO = os.environ.get("TURKCE_USLUP_HF", "mveyseldelibas/turkce-uslup")
+
+
+def _hf_indir() -> Path | None:
+    """BERTurk üslup modeli yerelde yoksa Hugging Face'ten (bert_onnx/). Kurulu değilse ya da kapalıysa None."""
+    if os.environ.get("TURKCE_USLUP_INDIRME") == "0":
+        return None
+    try:
+        from huggingface_hub import snapshot_download
+        return Path(snapshot_download(HF_DEPO, allow_patterns=["bert_onnx/*"])) / "bert_onnx"
+    except Exception:
+        return None
 
 
 def kucuk(s: str) -> str:
@@ -121,7 +136,10 @@ def _bert_klasor(klasor: str | Path | None) -> Path:
                                                   if os.environ.get("TURKCE_USLUP_BERT") else [])             + [_PAKET / "model" / "bert_onnx", _PAKET.parent / "model" / "bert_onnx"]:
         if (a / "uslup.onnx").exists():
             return a
-    raise FileNotFoundError("BERTurk üslup modeli (bert_onnx/uslup.onnx) bulunamadı")
+    if (a := _hf_indir()) is not None and (a / "uslup.onnx").exists():
+        return a
+    raise FileNotFoundError(f"BERTurk üslup modeli (bert_onnx/uslup.onnx) bulunamadı; pip install \"turkce-uslup[bert]\" "
+                            f"ile Hugging Face'ten ({HF_DEPO}) iner ya da TURKCE_USLUP_BERT ile klasörü gösterin")
 
 
 @lru_cache(maxsize=1)

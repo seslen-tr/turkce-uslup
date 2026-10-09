@@ -13,7 +13,11 @@ requires-python = ">=3.9"
 dependencies = ["numpy"]
 
 [project.optional-dependencies]
+bert = ["onnxruntime>=1.16", "tokenizers>=0.15", "huggingface_hub>=0.20"]
 egitim = ["scikit-learn", "pyarrow", "huggingface_hub"]
 
 [tool.setuptools.packages.find]
 include = ["turkce_uslup*"]
+
+[tool.setuptools.package-data]
+turkce_uslup = ["model/uslup.npz"]
