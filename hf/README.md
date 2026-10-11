@@ -21,10 +21,14 @@ Paket, bu model yoksa kendi içindeki 1,3 MB'lık TF-IDF modeline düşer.
 ```python
 # pip install "turkce-uslup[bert]"       → model ilk kullanımda buradan iner (bert_onnx/)
 from turkce_uslup import uslup
-uslup("Fırını 180 dereceye ısıtın. Unu ve şekeri karıştırın. Yumurtaları ekleyin.").uslup   # 'talimat'
+uslup("Fırını 180 dereceye ısıtın. Unu ve şekeri karıştırın. Yumurtaları ekleyin.").uslup   # 'talimat' (yönerge kuralı)
+uslup("Hey, nereye gidiyorsun öyle? Dur bir dakika, ben de geliyorum.").olasiliklar         # model kararı
 ```
 
-## Ölçüler (ayrılmış sınav, 6 üslup, şans %17)
+Depodaki dosyalar `bert_onnx/` altında: `uslup.onnx` (girdiler `input_ids`, `attention_mask`,
+`token_type_ids`; paket 96 parçayla keser), `tokenizer.json`, `etiketler.json` (üslup sırası).
+
+## Ölçüler (ayrılmış sınav, 1.604 cümle, 6 üslup, şans %17)
 
 | | Bu model | TF-IDF |
 |---|---|---|
